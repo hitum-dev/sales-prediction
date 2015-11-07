@@ -6,112 +6,13 @@ from pylab import *
 import re
 import csv
 
-   
-def loadDataSet(fileName):      #general function to parse tab -delimited floats
-    numFeat = len(open(fileName).readline().split('\t')) - 1 #get number of fields 
-    dataMat = []; labelMat = []
-    dataList = []
-    fr = open(fileName)
-    for line in fr.readlines():
-        lineArr =[]
-        curLine = line.strip().split('\t')
-        for i in range(numFeat):
-            lineArr.append(float(curLine[i]))
-        dataMat.append(lineArr[1:])
-        dataList.extend(lineArr[1:])
-        labelMat.append(float(curLine[-1]))
-    return dataMat,labelMat,dataList
 
-def loadDataSet_mul(fileName):      #general function to parse tab -delimited floats
-    numFeat = len(open(fileName).readline().split(',')) - 1 #get number of fields
-    dataMat = []; labelMat = []
-    print "start-0"
-    print numFeat
-    fr = open(fileName)
-    print "start-1"
-    line = fr.readlines()
-    print "start-2"
-    print line
-    for line in fr.readlines():
-        lineArr =[]
-        curLine = line.strip().split('\t')
-        print "start-3"
-        print curLine
-        print "start-4"
-        for i in range(numFeat):
-            lineArr.append(float(curLine[i]))
-        dataMat.append(lineArr)
-        print lineArr
-        labelMat.append(float(curLine[-1]))
-        print float(curLine[-1])
-    return dataMat,labelMat
-
-def test_singleFeture():
-    xArray, yArray,xList = loadDataSet('ex0.txt')
-    testLR = linearRegress()
-    
-    testLR.regress(xArray, yArray, solver = 'OLS')
-    predicted = testLR.predict(xArray,solver = 'OLS')
-    predicted_r =  predicted
-
-    testLR.regress(xArray, yArray, solver = 'ridge', **{'lam':0.1})
-    predicted_r = testLR.predict(xArray,solver = 'ridge')
-
-    cor = corrcoef(mat(predicted),mat(yArray))
-
-    print 'cor: ',cor
-    #pdb.set_trace()
-
-    figure(1)
-    subplot(211)  
-    plt.scatter(array(yArray), predicted)
-    plt.plot([min(yArray),max(yArray)],[min(predicted),max(predicted)],'--k')
-    plt.axis('tight')
-    plt.xlabel('True value')
-    plt.ylabel('Predicted value')
-    #plt.show()
-
-    subplot(212)  
-    plt.scatter(array(yArray), predicted_r)
-    plt.plot([min(yArray),max(yArray)],[min(yArray),max(yArray)],'--k')
-    plt.axis('tight')
-    plt.xlabel('True value')
-    plt.ylabel('Predicted value')
-    plt.show()
-
-    figure(2)
-    subplot(211)  
-    plt.scatter(array(xList), array(yArray))
-    plt.plot([min(xList),max(xList)],[min(yArray),max(yArray)],'--k')
-    plt.axis('tight')
-    plt.xlabel('feture value')
-    plt.ylabel('True value')
-
-    subplot(212)  
-    plt.scatter(array(xList), array(predicted_r))
-    plt.plot([min(xList),max(xList)],[min(predicted_r),max(predicted_r)],'--k')
-    plt.axis('tight')
-    plt.xlabel('feture value')
-    plt.ylabel('Predicted value')
-    
-    plt.show()
-
-def rssError(yArr,yHatArr): #yArr and yHatArr both need to be arrays
-    return ((yArr-yHatArr)**2).sum()
-
-def test_mutipleFeture():
-    #xArray, yArray = loadDataSet_mul('abalone.txt')
-    xArray, yArray = test('train.csv')
-    testLR = linearRegress()
-    print "xArray"
-    print xArray
-    print "yArray"
-    print yArray
-
-def test(fileName):
+def trimStore(fileName):
 
     numFeat = len(open(fileName).readline().split(',')) #get number of fields
     dataSet = []; saleSet = [];
+
+    storeDataSet={}
 
     csvFile=file('newStore.csv','wb+')
     fwStore =csv.writer(csvFile)
@@ -220,14 +121,125 @@ def test(fileName):
                 elif month == 'Dec':
                     wLine[25] =1
         fwStore.writerow(wLine)
+        storeDataSet[wLine[0]]=wLine
         wLine=[]
     csvFile.close()
     frStore.close()
-    return dataSet,saleSet
+    return storeDataSet
+
+def trimSaleData(filename): # new storeSaleGenerator
+    csvFile= file('newtrain.csv','wb+')
+    fwSale= csv.writer(csvFile) #fwSale is used for writing csv file
+
+    frSale=open('train.csv')
+
+    flag=0
+
+    wLine=[]
+
+    for line in frSale.readlines():
+
+        if flag==0:
+            flag=1
+            continue
+
+        for i in range(0,18): # initial
+            wLine.append('')
+
+        lineData=line.split(',')
+
+        wLine[0]=lineData[0]   #write data
+
+        if lineData[1]=='5':   #date of week
+            wLine[1]=0
+            wLine[2]=0
+            wLine[3]=0
+            wLine[4]=0
+            wLine[5]=1
+        elif lineData[1]=='4':
+            wLine[1]=0
+            wLine[2]=0
+            wLine[3]=0
+            wLine[4]=1
+            wLine[5]=0
+        elif lineData[1]=='3':
+            wLine[1]=0
+            wLine[2]=0
+            wLine[3]=1
+            wLine[4]=0
+            wLine[5]=0
+        elif lineData[1]=='2':
+            wLine[1]=0
+            wLine[2]=1
+            wLine[3]=0
+            wLine[4]=0
+            wLine[5]=0
+        elif lineData[1]=='1':
+            wLine[1]=1
+            wLine[2]=0
+            wLine[3]=0
+            wLine[4]=0
+            wLine[5]=0
+
+        date= lineData[2].split('-') #date
+
+        wLine[6]=date[0] # year
+        wLine[7]=date[1] # month
+        wLine[8]=date[2] # day
+
+        wLine[9]=lineData[4]  # customers
+
+        wLine[10]=lineData[5] #Open
+
+        wLine[11]=lineData[6] #promo
+
+        if lineData[7]=="\"a\"": #stateHoliday
+            wLine[12] = 1   #state
+            wLine[13] = 0   #easter
+            wLine[14] = 0   #christmas
+            wLine[15] = 0   #none
+        elif lineData[7]=="\"b\"":
+            wLine[12] = 0
+            wLine[13] = 1
+            wLine[14] = 0
+            wLine[15] = 0
+        elif lineData[7]=="\"c\"":
+            wLine[12] = 0
+            wLine[13] =0
+            wLine[14] =1
+            wLine[15]=0
+        elif lineData[7]=="\"0\"":
+            wLine[12] =0
+            wLine[13] =0
+            wLine[14] =0
+            wLine[15] =1
+
+        data=re.split('\"',lineData[-1])
+        if data[1]=='0':
+            wLine[16]=0
+            
+        elif data[1]=='1':
+            wLine[16]=1
+
+        wLine[17]=lineData[3] # sales
+        fwSale.writerow(wLine)
+        
+
+        wLine=[]
+
+    frSale.close()
+    csvFile.close()
+        
+
+    
+    
+
 
 if __name__ == '__main__':
     #test_singleFeture()
  #   test_mutipleFeture() 
 #    test('train.csv')
-    test('train.csv')
+#storeData=trimStore('train.csv') #get store information and trim the formate of store data
+    trimSaleData('abc.txt')
+
     
