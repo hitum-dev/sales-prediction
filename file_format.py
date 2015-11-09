@@ -234,9 +234,9 @@ def trimSaleData(filename): # new storeSaleGenerator
 
 def clusterStoreSale(storeInfo):
 
-    csvFile=file('newTrainData2','wb+')
+    csvFile=file('newTrainData2.csv','wb+')
     fwSale=csv.writer(csvFile)
-
+    
     #for store, info in storeInfo.items():
     for store in range(1,1116):
         frSale=open('newtrain.csv')
@@ -254,11 +254,30 @@ def clusterStoreSale(storeInfo):
         print "finish: ",store
         
     csvFile.close()
-                
-            
-        
-        
-        
+
+def sampleStoreSale(number,sampleNum):
+    csvFile =file('sampleFile.csv','wb+')
+    fwSample=csv.writer(csvFile)   # open a file to write sample item
+    
+    frSale=open('newTrainData2.csv')
+    saleSet=[]
+
+    count=0 # calculator
+    
+    for line in frSale.readlines():
+        lineData=line.strip().split(',')
+        #print 'lineData ',int(lineData[0]),'number ',int(number)
+        if count >=sampleNum:
+            break
+
+        if int(lineData[0])==int(number):
+            print "enter"
+            saleSet.append(lineData)
+            fwSample.writerow(lineData)
+            count=count+1
+
+    csvFile.close()
+    frSale.close()
     
 
 
@@ -266,8 +285,9 @@ if __name__ == '__main__':
     #test_singleFeture()
  #   test_mutipleFeture() 
 #    test('train.csv')
-    storeData=trimStore('train.csv') #get store information and trim the formate of store data
+ #   storeData=trimStore('train.csv') #get store information and trim the formate of store data
 ##    trimSaleData('abc.txt')
-    clusterStoreSale(storeData)
+ #   clusterStoreSale(storeData)
+    sampleStoreSale(1,100)
 
     
